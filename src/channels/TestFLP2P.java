@@ -1,7 +1,4 @@
-package tests;
-
-import channels.Message;
-import channels.P2PService;
+package channels;
 
 public class TestFLP2P implements P2PService {
 
@@ -10,7 +7,7 @@ public class TestFLP2P implements P2PService {
 	private P2PService up;
 	/**
 	 * 
-	 */ 
+	 */
 	public TestFLP2P(){
 
 	}
@@ -19,11 +16,8 @@ public class TestFLP2P implements P2PService {
 	public void deliver(int srcPid, Message msg) {
 		// TODO Auto-generated method stub
 		
-		System.out.println("Msg received from: " + srcPid);
+		System.out.println("Msg received from:" + srcPid);
 		System.out.println("Content: "+msg.getMsg());
-		System.out.println("sending the message back to: " + srcPid);
-		this.down.send(srcPid, new Message(msg.getMsg()+"bis!"));
-	
 	}
 
 	@Override
@@ -44,12 +38,6 @@ public class TestFLP2P implements P2PService {
 	 */
 	public void setUp(P2PService up) {
 		this.up = up;
-	}
-
-	@Override
-	public int getProcessID() {
-		// TODO Auto-generated method stub
-		return 0;
 	}
 
 	
