@@ -5,7 +5,6 @@ public class LocalProcess  implements Runnable {
 	
 		private int pid;
 		private TCPServer serv;
-		private int servPort; //TODO to change need to be dynamic
 		/**
 		 * @param pid
 		 */
