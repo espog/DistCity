@@ -1,43 +1,44 @@
 package channels;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketAddress;
 
 public class TCPClient {
 
-
-	public static final String DEFAULT_HOST = "localhost";
+	ObjectInputStream Sinput;	// to read the socket
+	ObjectOutputStream Soutput;	// towrite on the socket
 	Socket socket;
 	boolean isInitialized = false;
-	PrintWriter out = null;
-	BufferedReader reader;
-
+	
 	TCPClient(String host, int port) {
 		try {
-
-			InetAddress addr = InetAddress.getByName(host);
-			SocketAddress sockaddr = new InetSocketAddress(addr, port);
-			socket = new Socket();
-			socket.connect(sockaddr);
-			out = new PrintWriter(socket.getOutputStream(), true);
-			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			isInitialized = true;
-
+			socket = new Socket(host, port);
 		}
 		catch(Exception e) {
-			System.out.println("Error init Client :" + e);
+			System.out.println("Error connectiong to server:" + e);
 			e.printStackTrace();
 			return;
 		}
+	
+		
+//		System.out.println("Connection accepted " +
+//				socket.getInetAddress() + ":" +
+//				socket.getPort());
 
-		//		System.out.println("Connection accepted from server " + socket.getInetAddress() + ":" + socket.getPort());
-
-
+		/* Creating both Data Stream */
+		try
+		{
+			Sinput  = new ObjectInputStream(socket.getInputStream());
+			Soutput = new ObjectOutputStream(socket.getOutputStream());
+			isInitialized = true;
+		}
+		catch (IOException e) {
+			System.out.println("Exception creating new Input/output Streams: " + e);
+			return;
+		}
+	
 	}
 
 	/**
@@ -45,9 +46,8 @@ public class TCPClient {
 	 */
 	public void close() {
 		try{
-			out.print("stop"+"\n"); //send stopping message to server side to close communication
-			out.close();
-			socket.close();
+			Sinput.close();
+			Soutput.close();
 		}
 		catch(Exception e) {
 			//TODO improve
@@ -59,19 +59,17 @@ public class TCPClient {
 	 * send the given message to the server attached to this client 
 	 */
 	public void send(Message m) {
-		if(!isInitialized)
-			throw new RuntimeException("TCP connection has not been initialized ! ");
-
 		
-
+		if(!isInitialized)
+				return;
+		
 		try {
-
-			out.print(m.getMsg()+"\n");
-			out.flush();
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Soutput.writeObject(m.getMsg());
+			Soutput.flush();
+		}
+		catch(IOException e) {
+			System.out.println("Error writting to the socket: " + e);
+			return;
 		}
 	}  
 }
