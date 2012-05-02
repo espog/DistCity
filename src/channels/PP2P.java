@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import javax.management.RuntimeErrorException;
 import javax.swing.Timer;
 
 import tests.Debug;
@@ -27,6 +26,7 @@ public class PP2P implements P2PService, Debug {
 
 	private final String ACK_MSG ="ack";
 	private final String RE_ACK_MSG = "ackack";
+	private final char MSG_SEP=':';
 
 
 	//Process Management
@@ -108,6 +108,7 @@ public class PP2P implements P2PService, Debug {
 		ProcessInfo pInfo = pid_info_map.get(objCurrentPID); // info of the current process (receiving the delivery)
 
 		Message ackMesg =null ;
+		Message toDeliver = null;
 		int currMsgID  = msg.getId();
 
 
@@ -122,10 +123,13 @@ public class PP2P implements P2PService, Debug {
 			//check if message hasn't been delivered yet 
 			if (!pInfo.hasBeenDelivered(srcPid, currMsgID)){ //check if the current message from srcPiD has been delivered 
 				pInfo.putInDelivered(srcPid, currMsgID);
-				//TODO Message ID shouldn'be delivered !!! change
-
+				
+				//before delivering it, must remove the id of the message in its content.
+				int indxOfSep = msg.getMsg().indexOf(MSG_SEP);
+				toDeliver = new Message(msg.getMsg().substring(indxOfSep+1)); 
 				//deliver it to the upper service
-				this.upService.deliver(srcPid, msg);
+				this.upService.deliver(srcPid, toDeliver);
+				
 				//prepare the ack message to send back to the src process
 				ackMesg = new Message(ACK_MSG,currMsgID);
 				ackMesg.setType(MessageType.ACK);
