@@ -89,7 +89,7 @@ public class BaseService implements P2PService, Debug {
 	@Override
 	public void send(int dstPid, Message msg) {
 
-		debug(TEST, "==>P("+ this.process.getPid()+ ") BaseService/send: "+ msg.getMsg());
+		debug(TEST, "==> P("+ this.process.getPid()+ ") BaseService/send: "+ msg.getMsg());
 
 		
 //		System.out.println("Destination PID: "+ dstPid);

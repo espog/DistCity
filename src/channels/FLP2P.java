@@ -23,7 +23,7 @@ public class FLP2P implements P2PService, Debug{
 
 	@Override
 	public void deliver(int srcPid, Message msg) {
-		debug(TEST, "\t\t <== FLP2P/deliver:  SrcPID: "+srcPid+ " Content: "+ msg.getMsg());
+		debug(TEST, "\t\t <== P("+ getProcessID()+ ") FLP2P/deliver:  SrcPID: "+srcPid+ " Content: "+ msg.getMsg());
 
 		this.upServ.deliver(srcPid, msg); // FLP2P delivers message directly
 	}
@@ -31,19 +31,20 @@ public class FLP2P implements P2PService, Debug{
 	@Override
 	public void send(int dstPid, Message msg) {
 		
-		debug(TEST, "==> FLP2P/send:  destPID: "+dstPid+ " Content : "+ msg.getMsg());
+		debug(TEST, "==> P("+ getProcessID()+ ") FLP2P/send:  destPID: "+dstPid+ " Content : "+ msg.getMsg());
 		
 		// TODO PUT AN Probabilistic Message drop !!!
 		double nb= Math.random() *100;
 	
-		if( nb <= 4 ){ //
+		if( nb <= 10 ){ //
 			//do nothing -> drop message except  Re-Ack messages
 			if(!msg.getType().equals(MessageType.RE_ACK)){
-				System.out.println("FLP2P LINK  Failure : A message has been dropped: " + msg.getMsg());
+				System.err.println("P("+ getProcessID()+ ") FLP2P LINK  Failure : A message has been dropped. DestPID: " +dstPid+" Content: "+ msg.getMsg());
 			}else
 				this.downServ.send(dstPid, msg);
 		}else
 			this.downServ.send(dstPid, msg); // call the send method of the base service directly. No transformation preprocessing needed
+	
 	}
 
 	/**

@@ -16,6 +16,8 @@ public class TestPP2P implements BroacastService {
 
 
 	private P2PService down;
+	private int currentPID = -1;
+	private int nbDeliver = 0;
 
 	/**
 	 * @param down
@@ -27,24 +29,37 @@ public class TestPP2P implements BroacastService {
 
 	@Override
 	public void deliver(int srcPID, Message msg) {
-
-		System.out.println("== Simulating Broacast Layer ===");
-		System.out.println("Content: "+msg.getMsg());
-
+		
+		System.out.println("== Simulating Broacast Layer === P("+ getProcessID()+ ") Content: "+msg.getMsg());
+		nbDeliver++;
+		if(nbDeliver > 1)
+			System.err.println("!!!! Nb deliver :"+nbDeliver);
+	
 	}
 
 	
 	public void send(Message msg) {
 
-		this.down.send(1, msg);
-		this.down.send(2,msg);
+		for (int i = 0; i < PP2P.NB_PROCESSES; i++) {
+			if( getProcessID() != i+1)
+				this.down.send(i+1, msg);
+					
+		}
 	}
-
+	public int getProcessID(){
+		if(currentPID == -1 )
+			currentPID = this.down.getProcessID();
+		
+		return currentPID;
+	}
+	
 	public static void main(String[] args) {
 
 		TCPServer serv = new TCPServer(1500);
 		TCPServer serv2 = new TCPServer(1501);
 		TCPServer serv3  = new TCPServer(1502);
+//		TCPServer serv4  = new TCPServer(1503);
+
 
 		LocalProcess p1 = new LocalProcess(1); //runnable 
 		p1.setServ(serv);
@@ -52,6 +67,8 @@ public class TestPP2P implements BroacastService {
 		p2.setServ(serv2);
 		LocalProcess p3 = new LocalProcess(3); // runnable
 		p3.setServ(serv3);
+//		LocalProcess p4 = new LocalProcess(4); // runnable
+//		p3.setServ(serv4);
 		
 		//Register process pid<-->physical address (port number)
 		BaseService.register(1,1500);
