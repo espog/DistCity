@@ -1,6 +1,7 @@
 package tests;
 
-import broadcast.BroacastService;
+import algo.broadcast.BroacastService;
+import algo.broadcast.ProcessManager;
 import channels.BaseService;
 import channels.FLP2P;
 import channels.LocalProcess;
@@ -40,7 +41,7 @@ public class TestPP2P implements BroacastService {
 	
 	public void send(Message msg) {
 
-		for (int i = 0; i < PP2P.NB_PROCESSES; i++) {
+		for (int i = 0; i < ProcessManager.NB_PROCESSES; i++) {
 			if( getProcessID() != i+1)
 				this.down.send(i+1, msg);
 					

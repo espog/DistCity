@@ -10,7 +10,8 @@ import java.util.Map;
 import javax.swing.Timer;
 
 import tests.Debug;
-import broadcast.BroacastService;
+import algo.broadcast.BroacastService;
+import algo.broadcast.ProcessManager;
 
 /**
  * 
@@ -21,13 +22,10 @@ public class PP2P implements P2PService, Debug {
 
 
 	public static boolean TEST= true;
-	//TODO will need to be global (because it can be used by Broadcast algo or Failure detector)
-	public static final int NB_PROCESSES = 3; 
-
+	
 	private final String ACK_MSG ="ack";
 	private final String RE_ACK_MSG = "ackack";
 	private final char MSG_SEP=':';
-
 
 	//Process Management
 	private static Map<Integer,Integer> pid_NxtMsgID_map = new HashMap<Integer, Integer>();
@@ -58,18 +56,18 @@ public class PP2P implements P2PService, Debug {
 	private void initLink(){
 
 		//Initialize MessageID 
-		for (int i= 0 ; i < NB_PROCESSES ; i++){
+		for (int i= 0 ; i < ProcessManager.NB_PROCESSES ; i++){
 			pid_NxtMsgID_map.put(new Integer(i+1), new Integer(INITIAL_ID)); // for each process pid i , Initial MsgId is 0
 		}
 
 		//initializing data structures for process management
 		//for each process, init processInfo "bag"
-		for (int i = 0; i < NB_PROCESSES; i++) {
+		for (int i = 0; i < ProcessManager.NB_PROCESSES; i++) {
 			pid_info_map.put(new Integer(i+1), new ProcessInfo());
 		}
 
 
-		//Initializing Timer for resending messages in caseof loss
+		//Initializing Timer for resending messages in case of loss
 		Timer t  = initTimer();
 		t.start();
 	}

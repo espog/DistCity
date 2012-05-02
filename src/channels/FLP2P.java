@@ -36,7 +36,7 @@ public class FLP2P implements P2PService, Debug{
 		// TODO PUT AN Probabilistic Message drop !!!
 		double nb= Math.random() *100;
 	
-		if( nb <= 10 ){ //
+		if( nb <= 50 ){ //
 			//do nothing -> drop message except  Re-Ack messages
 			if(!msg.getType().equals(MessageType.RE_ACK)){
 				System.err.println("P("+ getProcessID()+ ") FLP2P LINK  Failure : A message has been dropped. DestPID: " +dstPid+" Content: "+ msg.getMsg());
