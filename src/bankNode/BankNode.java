@@ -9,5 +9,9 @@ public class BankNode {
 	public BankNode() {
 		BankMap = new HashMap(10);
 	}
+	
+	public HashMap getBankMap(){
+		return BankMap;
+	}
 
 }
