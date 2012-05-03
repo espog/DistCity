@@ -1,27 +1,33 @@
 package channels;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import tests.Debug;
 
-public class TCPServer {
+
+public class TCPServer  implements Debug{
 
 	private final char msgSep=':';
-	
+
 	// the socket used by the server
 	private ServerSocket serverSocket;
 	private P2PService upService;
-	 
+
+	private static boolean TEST =true;
+
+
 	// server constructor
 	public TCPServer(int port) {
-		
+
+
 		upService = null;
 		try {
 			serverSocket = new ServerSocket(port);
-			
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -32,39 +38,56 @@ public class TCPServer {
 	 * for running the server
 	 */
 	public void run(){
-		
+
+
 		/* create socket server and wait for connection requests */
 		try 
 		{
-			System.out.println("Server waiting for client on port " + serverSocket.getLocalPort());
+			//			System.out.println("Server waiting for client on port " + serverSocket.getLocalPort() + "PID:"+
+			//																((BaseService)this.upService).getProcess().getPid());
+
 
 			while(true) 
 			{
 				Socket socket = serverSocket.accept();  // accept connection
 
-				System.out.println("New client asked for a connection");
-				TcpThread t = new TcpThread(socket, upService);    // make a thread of it
-				System.out.println("Starting a thread for a new Client");
+				//				System.out.println("New client asked for a connection");
+				if(TEST){
+					if (this.upService == null){
+						debug(TEST,"upService is null !!!");
+					}
+				}
+				TcpThread t = new TcpThread(socket);    // make a thread of it
+				//				System.out.println("Starting a thread for a new Client");
 				t.start();
 			}
 		}
 		catch (IOException e) {
 			System.out.println("Exception on new ServerSocket: " + e);
 		}
-		
+
 	}
-	
+
+
+	/**
+	 * @return the port
+	 */
+	public int getPort() {
+		return this.serverSocket.getLocalPort();
+	}
+
+
 	public void close(){
-		
+
 		try {
 			this.serverSocket.close();
-			
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * @param listeningServ the listeningServ to set
 	 */
@@ -76,74 +99,101 @@ public class TCPServer {
 	class TcpThread extends Thread {
 		// the socket where to listen/talk
 		Socket socket;
-		ObjectInputStream Sinput;
-		ObjectOutputStream Soutput;
-		P2PService service;
+		BufferedReader reader;
+		boolean busy = false;
 
-		TcpThread(Socket socket, P2PService serv) {
+		TcpThread(Socket socket) {
 			this.socket = socket;
-			this.service = serv;
-		}
-		public void run() {
-			
-			int srcPID;
-			
-			/* Creating both Data Stream */
-			System.out.println("Thread trying to create Object Input/Output Streams");
+
+
+
+			//			System.out.println("Thread trying to create Object Input/Output Streams");
 			try
 			{
-				// create output first
-				Soutput = new ObjectOutputStream(socket.getOutputStream());
-				Soutput.flush();
-				Sinput  = new ObjectInputStream(socket.getInputStream());
+				reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+				busy = true;
+
 			}
 			catch (IOException e) {
-				System.out.println("Exception creating new Input/output Streams: " + e);
+				System.out.println("Exception while init TCP thread: " + e);
+				e.printStackTrace();
 				return;
 			}
-			System.out.println("Thread waiting for a String from the Client");
-			// read a String (which is an object)
+		}
+		public void run() {
+
+			int srcPID;
+
+
+			//			System.out.println("Thread waiting for a String from the Client");
 			try {
-			
-				String rawMsg = (String) Sinput.readObject();
-				int indxSep = rawMsg.indexOf(msgSep);
-				
-				//Get the sending process ID
-				srcPID = new Integer(rawMsg.substring(0,indxSep));
-				
-				//Get the rest of the message
-				Message  m = new Message(rawMsg.substring(indxSep+1));
-				
-				//Calling the upper service
-				this.service.deliver(srcPID, m);
-	
-			
+
+				while(busy){
+
+					String rawMsg = reader.readLine();		
+
+					if(rawMsg != null){
+
+
+						debug(TEST,"\t\t\t <== P("+ getProcessID()+ ") TCPServer - received: message : "+rawMsg);
+
+						if (rawMsg.equalsIgnoreCase("stop")) // what if client crashes ? if I/O exception -> thread will stop
+							busy = false;		
+
+						int indxSep = rawMsg.indexOf(msgSep);
+						//Get the sending process ID
+						srcPID = new Integer(rawMsg.substring(0,indxSep));
+						//Get the rest of the message
+						Message  m = new Message(rawMsg.substring(indxSep+1));
+						//Calling the upper service
+
+
+						debug(TEST,"\t\t\t <== P("+ getProcessID()+ ")  TCPServer : Message to deliver: "+ m.getMsg());
+
+						upService.deliver(srcPID, m);
+					}else
+						System.err.println("\t\t\t <== P("+ getProcessID()+ ") TCPServer : null value received on this port");
+
+
+
+				}
+
 			}
 			catch (IOException e) {
-				System.out.println("Exception reading/writing  Streams: " + e);
+				System.out.println("Exception reading stream from client: " + e);
+				//TODO improve exception handling
 				return;				
 			}
-			// will surely not happen with a String
-			catch (ClassNotFoundException o) {
-				//TODO improve exception handling
-				o.printStackTrace();
-			}
-			
 			catch (Exception e ){
 				//TODO improve exception handling
-				e.printStackTrace();
+					e.printStackTrace();
 			}
-			
+
 			finally {
 				try {
-					Soutput.close();
-					Sinput.close();
+					reader.close();
 				}
-				catch (Exception e) {					
+				catch (Exception e) {	
+					//TODO improve exception handling
+					e.printStackTrace();
 				}
 			}
 		}
 	}
+
+
+	private int getProcessID(){
+		return ((BaseService)this.upService).getProcess().getPid();
+	}
+
+	@Override
+	public void debug(boolean on, String msg) {
+		if(on)
+			System.out.println(msg);
+
+	}
+
+
 
 
 }
